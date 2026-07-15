@@ -72,13 +72,9 @@ public partial class App : Application
 
     protected override async void OnExit(ExitEventArgs e)
     {
-        using (var mre = new ManualResetEventSlim(false))
+        if (this.Ctrl is not null)
         {
-            if(this.Ctrl is not null)
-            {
-                await this.Ctrl.StopAsync();
-            }
-            mre.Wait(TimeSpan.FromSeconds(10));
+            await this.Ctrl.StopAsync();
         }
         Environment.Exit(0);
     }
