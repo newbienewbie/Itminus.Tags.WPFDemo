@@ -14,7 +14,6 @@ public class HeartBeatLogicet : LogicetBase
     private readonly ITag heartReq;
     private readonly ITag heartAck;
     private readonly ILogger<HeartBeatLogicet> _logger;
-    private long _lastTicks;
 
     public HeartBeatLogicet(IReadOnlyList<ITagChannel> channels, ITagGrp tags, ILogger<HeartBeatLogicet> logger) : base(channels, tags)
     {
@@ -22,7 +21,6 @@ public class HeartBeatLogicet : LogicetBase
 
         heartReq = grp.SelectTag("PLC/心跳请求");
         heartAck = grp.SelectTag("MST/心跳响应");
-        _lastTicks = Stopwatch.GetTimestamp();
         this._logger = logger;
     }
 
@@ -33,10 +31,7 @@ public class HeartBeatLogicet : LogicetBase
     public override Task ProcessAsync(ITagGrp entry, ITagChannel? thisChannel)
     {
         var now = Stopwatch.GetTimestamp();
-        var elapsedMs = (now - _lastTicks) * 1000.0 / Stopwatch.Frequency;
-        _lastTicks = now;
         heartAck.Value = heartReq.Value;
-        this._logger.LogInformation($"##$$##$$:{heartAck.Value}  cycle={elapsedMs:F1}ms");
         return Task.CompletedTask;
     }
 }

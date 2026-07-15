@@ -74,7 +74,10 @@ public partial class App : Application
     {
         using (var mre = new ManualResetEventSlim(false))
         {
-            await this.Ctrl!.StopAsync();
+            if(this.Ctrl is not null)
+            {
+                await this.Ctrl.StopAsync();
+            }
             mre.Wait(TimeSpan.FromSeconds(10));
         }
         Environment.Exit(0);
