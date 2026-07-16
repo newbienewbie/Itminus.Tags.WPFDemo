@@ -25,21 +25,4 @@ internal static class ServiceExtensions
         return services;
     }
 
-
-    public static ITagsProject MakeProject(this IServiceProvider sp, string? dir = null)
-    {
-        var factory = sp.GetRequiredService<ITagsProjectFactory>();
-
-        if (string.IsNullOrEmpty(dir))
-        {
-            var loc = Assembly.GetExecutingAssembly().Location;
-            dir = Path.GetDirectoryName(loc);
-        }
-        if (string.IsNullOrEmpty(dir))
-        {
-            dir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-        }
-        var proj = factory.Create(dir!, root: null);
-        return proj;
-    }
 }
