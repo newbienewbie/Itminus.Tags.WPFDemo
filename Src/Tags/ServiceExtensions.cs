@@ -21,7 +21,6 @@ internal static class ServiceExtensions
         {
             builder.AddS7Support();
         });
-        services.AddSingleton<TagsProjectCtrl>();
         return services;
     }
 
