@@ -1,14 +1,7 @@
 ﻿using Itminus.Tags;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Serilog;
-using System.Configuration;
-using System.Data;
-using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Windows;
-using WPFDemo.Tags;
 using WPFDemo.Tags.Logicets;
 
 namespace WPFDemo;
@@ -23,8 +16,10 @@ public partial class App : Application
 
     private void Application_Startup(object sender, StartupEventArgs e)
     {
-        ServiceCollection services = ConfigureServiceCollections();
-        this.Root = services.BuildServiceProvider();
+        var builder = WebApplication.CreateBuilder();
+        builder.Services.ConfigureServies();
+        var app = builder.Build();
+        this.Root = app.Services;
         this.Ctrl = this.Root.GetRequiredService<ITagsProjectCtrl>();
         this.Ctrl.OnStartingException = ex =>
         {
@@ -32,14 +27,19 @@ public partial class App : Application
             return Task.FromResult(true);
         };
 
-        var th = new Thread(async () =>
+        StartTagsPoll(this.Root, this.Ctrl);
+        StartWeb(app);
+    }
+
+    private void StartTagsPoll(IServiceProvider sp, ITagsProjectCtrl ctrl)
+    {
+        var th1 = new Thread(async () =>
         {
-            var loggerFactory = this.Root.GetRequiredService<ILoggerFactory>();
+            var loggerFactory = sp.GetRequiredService<ILoggerFactory>();
             var logger = loggerFactory.CreateLogger<App>();
 
-            var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            dir = Path.Combine(dir!, "Tags");
-            await this.Ctrl.StartPollAsync(dir, null, (proj, ct) =>
+            var dir = Directory.GetParent(Assembly.GetExecutingAssembly().Location);
+            await ctrl.StartPollAsync(Path.Combine(dir!.FullName, "Tags"), null, (proj, ct) =>
             {
                 proj.Logicets.Add(new HeartBeatLogicet(
                     proj.Channels,
@@ -47,34 +47,34 @@ public partial class App : Application
                     loggerFactory.CreateLogger<HeartBeatLogicet>()
                 ));
 
-                proj.TurnStarted += (grp, ch) => {
+                proj.TurnStarted += (grp, ch) =>
+                {
                     logger.LogInformation("Tags处理开始,grp={grpName}", grp.Name);
                     return Task.CompletedTask;
                 };
-                proj.TurnCrashed += (grp, ch, ex) => {
-                    logger.LogError(ex, "Tags处理异常,grp={grpName}", grp.Name);
+                proj.TurnCrashed += (grp, ch, ex) =>
+                {
+                    logger.LogError(ex, "Tags处理异常,grp={grp.Name}", grp.Name);
+                    MessageBox.Show($"Tags处理发生异常：{ex.Message}");
                     return Task.CompletedTask;
                 };
 
                 return Task.CompletedTask;
             });
         });
-        th.IsBackground = true;
-        th.Start();
-
+        th1.IsBackground = true;
+        th1.Start();
     }
 
-    private static ServiceCollection ConfigureServiceCollections()
+    private static void StartWeb(WebApplication app)
     {
-        var services = new ServiceCollection();
-        services.AddWpfDemoTags();
-        services.AddSerilog((sp, lc) => lc
-            .ReadFrom.Services(sp)
-            .WriteTo.Console()
-            .WriteTo.File("logs/log.txt", outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level:u3}] [{SourceContext}] {Message}{NewLine}{Exception}", rollingInterval: RollingInterval.Day)
-            .Enrich.FromLogContext()
-        );
-        return services;
+        app.ConfigureMiddlewares();
+        var th2 = new Thread(() =>
+        {
+            app.Run("http://localhost:3001");
+        });
+        th2.IsBackground = true;
+        th2.Start();
     }
 
     protected override async void OnExit(ExitEventArgs e)
