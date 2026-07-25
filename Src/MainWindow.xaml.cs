@@ -1,12 +1,8 @@
 ﻿using Itminus.Tags;
-using Itminus.Tags.McpServer;
-using Itminus.Tags.Rx;
-using System.Reactive.Concurrency;
-using System.Reactive.Disposables;
-using System.Reactive.Disposables.Fluent;
-using System.Reactive.Linq;
+using Itminus.Tags.R3;
+using R3;
 using System.Windows;
-using System.Windows.Forms;
+using System.Windows.Media;
 
 namespace WPFDemo;
 
@@ -36,26 +32,24 @@ public partial class MainWindow : Window, IDisposable
 
 
         req.Watch()
-            .ObserveOn(DispatcherScheduler.Current)
+            .ObserveOnCurrentDispatcher()
             .Subscribe(evt =>
             {
-                this.Dispatcher.Invoke(() =>
-                {
-                    this.txtReq.Text = evt.EventArgs.NewValue?.ToString();
-                });
+                var newvalue = evt.NewValue;
+                this.txtReq.Text = newvalue?.ToString();
+                this.txtReq.Foreground= newvalue is true ? Brushes.Green : Brushes.Black;
             })
-            .DisposeWith(_disposables);
+            .AddTo(_disposables);
 
         ack.Watch()
-            .ObserveOn(DispatcherScheduler.Current)
+            .ObserveOnCurrentDispatcher()
             .Subscribe(evt =>
             {
-                this.Dispatcher.Invoke(() =>
-                {
-                    this.txtAck.Text = evt.EventArgs.NewValue?.ToString();
-                });
+                var newvalue = evt.NewValue;
+                this.txtAck.Text = newvalue?.ToString();
+                this.txtAck.Foreground = newvalue is true ? Brushes.Green : Brushes.Black;
             })
-            .DisposeWith(_disposables);
+            .AddTo(_disposables);
     }
 
     public void Dispose()
