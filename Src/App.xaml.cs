@@ -48,11 +48,11 @@ public partial class App : Application
                 ));
 
                 proj.TurnStarted += (grp, ch) => {
-                    logger.LogInformation("Tags处理开始,grp={grpName}", grp.Name);
+                    logger.LogInformation("Tags处理开始,grp={grpName}", grp.TagName());
                     return Task.CompletedTask;
                 };
                 proj.TurnCrashed += (grp, ch, ex) => {
-                    logger.LogError(ex, "Tags处理异常,grp={grpName}", grp.Name);
+                    logger.LogError(ex, "Tags处理异常,grp={grpName}", grp.TagName());
                     return Task.CompletedTask;
                 };
 
