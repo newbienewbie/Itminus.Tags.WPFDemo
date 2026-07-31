@@ -39,7 +39,7 @@ public partial class App : Application
 
             var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             dir = Path.Combine(dir!, "Tags");
-            await this.Ctrl.StartPollAsync(dir, null, (proj, ct) =>
+            await this.Ctrl.StartPollAsync(dir, null, (proj,sp, ct) =>
             {
                 proj.Logicets.Add(new HeartBeatLogicet(
                     proj.Channels,
