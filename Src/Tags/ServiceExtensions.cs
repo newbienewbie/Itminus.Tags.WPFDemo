@@ -19,6 +19,7 @@ internal static class ServiceExtensions
         services.AddLogging();
         services.AddTagsProjectServices(builder =>
         {
+            builder.EnableXmlSchemaValidation();
             builder.AddS7Support();
         });
         return services;
